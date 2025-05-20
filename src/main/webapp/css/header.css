@@ -1,0 +1,277 @@
+@charset "UTF-8";
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #FDFBEE;
+    color: #333;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul {
+    list-style: none;
+}
+
+header {
+    background-color: #E5D8C8;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.left-section {
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.logo {
+    flex: 2;
+    text-align: center;
+}
+
+.logo h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #355B42;
+}
+
+nav {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.main-nav {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+/* Dropdown Styles */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    min-width: 180px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    padding: 8px 0;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content li a {
+    padding: 8px 15px;
+    display: block;
+    color: #4a5568;
+    transition: background-color 0.3s;
+}
+
+.dropdown-content li a:hover {
+    background-color: #f8f9fa;
+    color: #355B42;
+}
+
+/* Profile Section Styles */
+.profile-section {
+    position: relative;
+}
+
+.profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #355B42;
+    cursor: pointer;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.profile-btn:hover {
+    background-color: rgba(53, 91, 66, 0.1);
+}
+
+.profile-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #fff;
+    min-width: 200px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    padding: 8px 0;
+}
+
+.profile-dropdown:hover .profile-dropdown-content {
+    display: block;
+}
+
+.profile-dropdown-content a {
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #4a5568;
+    transition: background-color 0.3s;
+}
+
+.profile-dropdown-content a:hover {
+    background-color: #f8f9fa;
+    color: #355B42;
+}
+
+/* Auth Buttons Styles */
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.login-btn, .register-btn {
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.login-btn {
+    color: #355B42;
+    background-color: transparent;
+    border: 1px solid #355B42;
+}
+
+.register-btn {
+    color: #fff;
+    background-color: #355B42;
+}
+
+.login-btn:hover {
+    background-color: rgba(53, 91, 66, 0.1);
+}
+
+.register-btn:hover {
+    background-color: #2a4935;
+}
+
+.logout-link {
+    color: #DC3545 !important;
+}
+
+.logout-link:hover {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+.mobile-menu-btn {
+    display: none;
+    font-size: 24px;
+    color: #355B42;
+    cursor: pointer;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .header-container {
+        padding: 0 15px;
+    }
+    
+    .main-nav {
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-container {
+        flex-wrap: wrap;
+    }
+
+    .logo {
+        order: 1;
+        flex: 1;
+        text-align: left;
+    }
+
+    .mobile-menu-btn {
+        display: block;
+        order: 2;
+    }
+
+    nav {
+        order: 4;
+        flex: 100%;
+        display: none;
+    }
+
+    .left-section {
+        order: 3;
+        flex: 100%;
+        justify-content: flex-start;
+        margin-top: 15px;
+    }
+
+    .main-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .dropdown-content {
+        position: static;
+        box-shadow: none;
+        padding-left: 20px;
+    }
+
+    .profile-dropdown-content {
+        position: static;
+        box-shadow: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-buttons {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .logo h1 {
+        font-size: 20px;
+    }
+}

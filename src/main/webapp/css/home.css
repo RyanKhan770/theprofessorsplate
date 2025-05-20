@@ -1,0 +1,194 @@
+:root {
+    --color-primary: #3a5a40;
+    --color-secondary: #c5a880;
+    --color-accent: #e05a47;
+    --color-background: #f8f5f2;
+    --color-text: #2d2d2d;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.6;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+}
+
+.hero {
+    min-height: 100vh;
+    padding: 2rem;
+    background: var(--color-primary);
+    color: white;
+    display: grid;
+    place-items: center;
+}
+
+.hero-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    align-items: center;
+    padding-top: 4rem;
+}
+
+.hero-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+}
+
+.hero-image img {
+    width: 100%;
+    border-radius: 20px;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
+
+.cta-button {
+    display: inline-flex;
+    padding: 1rem 2rem;
+    background: var(--color-secondary);
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 500;
+    margin-top: 1rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.categories {
+    padding: 4rem 2rem;
+    display: grid;
+    gap: 3rem;
+}
+
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    text-align: center;
+    color: var(--color-primary);
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.category-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.category-card img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
+
+.category-card h3 {
+    padding: 1rem;
+    font-family: 'Playfair Display', serif;
+}
+
+.special-items {
+    padding: 4rem 2rem;
+    background: white;
+    display: grid;
+    gap: 3rem;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.item-card {
+    background: var(--color-background);
+    border-radius: 15px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.item-card img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
+
+.item-info {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.price {
+    font-size: 1.25rem;
+    color: var(--color-primary);
+    margin-top: auto;
+}
+
+.order-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.contact {
+    background: var(--color-primary);
+    color: white;
+    padding: 4rem 2rem;
+    display: grid;
+    place-items: center;
+}
+
+.contact-content {
+    max-width: 600px;
+    display: grid;
+    gap: 2rem;
+    text-align: center;
+}
+
+.contact-info {
+    display: grid;
+    gap: 1rem;
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 1s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}

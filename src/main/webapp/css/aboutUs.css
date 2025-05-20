@@ -1,0 +1,142 @@
+@charset "UTF-8";
+.about-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.hero-section {
+    background-color: #E5D8C8;
+    padding: 100px 20px;
+    text-align: center;
+    border-radius: 15px;
+    margin-bottom: 60px;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    color: #355B42;
+    margin-bottom: 20px;
+}
+
+.hero-content .subtitle {
+    font-size: 1.5rem;
+    color: #666;
+}
+
+.story-section {
+    margin-bottom: 60px;
+}
+
+.story-content {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+}
+
+.story-text {
+    flex: 1;
+}
+
+.story-text h2 {
+    color: #355B42;
+    margin-bottom: 20px;
+}
+
+.story-image {
+    flex: 1;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 400px;
+    background-color: #E5D8C8;
+    border-radius: 15px;
+}
+
+.values-section {
+    margin-bottom: 60px;
+    text-align: center;
+}
+
+.values-section h2 {
+    color: #355B42;
+    margin-bottom: 40px;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.value-card {
+    padding: 30px;
+    background-color: #FDFBEE;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.value-card i {
+    font-size: 2.5rem;
+    color: #355B42;
+    margin-bottom: 20px;
+}
+
+.value-card h3 {
+    color: #355B42;
+    margin-bottom: 15px;
+}
+
+.stats-section {
+    background-color: #E5D8C8;
+    padding: 60px 20px;
+    border-radius: 15px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+
+.stat-card {
+    text-align: center;
+}
+
+.stat-card h3 {
+    font-size: 2.5rem;
+    color: #355B42;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 992px) {
+    .story-content {
+        flex-direction: column;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .values-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .values-grid,
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+}
