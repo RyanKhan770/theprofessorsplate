@@ -46,7 +46,7 @@
             <c:forEach items="${menuList}" var="item">
                 <div class="menu-item" data-category="${item.foodCategory}">
                     <div class="item-image">
-                        <img src="${pageContext.request.contextPath}/resources/productsImage/${item.foodImage}" alt="${item.foodName}">
+                        <img src="${pageContext.request.contextPath}/${item.foodImage}" alt="${item.foodName}">
                         
                         <c:if test="${sessionScope.userId != null}">
                             <form action="${pageContext.request.contextPath}/cart" method="post" class="add-to-cart-form">

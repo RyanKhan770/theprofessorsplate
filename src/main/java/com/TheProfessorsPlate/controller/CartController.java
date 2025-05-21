@@ -108,22 +108,28 @@ public class CartController extends HttpServlet {
             int foodId = Integer.parseInt(request.getParameter("foodId"));
             Integer cartId = (Integer) SessionUtil.getAttribute(request, "cartId");
             
+            logger.info("Adding to cart - userId: " + userId + ", foodId: " + foodId + ", cartId: " + cartId);
+            
             // If no cart exists, create a new one
             if (cartId == null) {
+                logger.info("No cart found, creating new cart for user: " + userId);
                 Cart newCart = cartService.createCart(userId);
                 
                 if (newCart != null) {
                     cartId = newCart.getCartId();
+                    logger.info("New cart created with ID: " + cartId);
                     SessionUtil.setAttribute(request, "cartId", cartId);
                 } else {
+                    logger.severe("Failed to create new cart for user: " + userId);
                     throw new Exception("Failed to create cart");
                 }
             }
             
-            // Add the item to the cart
+            // Add the item to the cart - this will establish the connection in cart_details
             boolean success = cartService.addToCart(userId, foodId, cartId);
             
             if (success) {
+                logger.info("Item " + foodId + " added successfully to cart ID: " + cartId);
                 request.setAttribute("success", "Item added to cart successfully");
                 
                 // Redirect back to menu
@@ -135,6 +141,7 @@ public class CartController extends HttpServlet {
                 
                 response.sendRedirect(request.getContextPath() + "/menu");
             } else {
+                logger.severe("Failed to add item " + foodId + " to cart " + cartId);
                 throw new Exception("Failed to add item to cart");
             }
         } catch (NumberFormatException e) {
