@@ -10,16 +10,16 @@ public class Menu {
     private String foodCategory;
     private String foodImage;
     private int discountId;
-    
-    // Calculated field
     private BigDecimal discountedPrice;
+    private int stockQuantity; // Added stock quantity field
     
-    // Constructors
+    // Default constructor
     public Menu() {
     }
     
+    // Constructor with all fields
     public Menu(int foodId, String foodName, String foodDescription, BigDecimal foodPrice, 
-                String foodCategory, String foodImage, int discountId) {
+                String foodCategory, String foodImage, int discountId, BigDecimal discountedPrice, int stockQuantity) {
         this.foodId = foodId;
         this.foodName = foodName;
         this.foodDescription = foodDescription;
@@ -27,6 +27,8 @@ public class Menu {
         this.foodCategory = foodCategory;
         this.foodImage = foodImage;
         this.discountId = discountId;
+        this.discountedPrice = discountedPrice;
+        this.stockQuantity = stockQuantity;
     }
     
     // Getters and setters
@@ -92,5 +94,38 @@ public class Menu {
     
     public void setDiscountedPrice(BigDecimal discountedPrice) {
         this.discountedPrice = discountedPrice;
+    }
+    
+    public int getStockQuantity() {
+        return stockQuantity;
+    }
+    
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+    
+    // Helper method to determine if the item is in stock
+    public boolean isInStock() {
+        return stockQuantity > 0;
+    }
+    
+    // Helper method to get stock status
+    public String getStockStatus() {
+        if (stockQuantity > 10) {
+            return "in-stock";
+        } else if (stockQuantity > 0) {
+            return "low-stock";
+        } else {
+            return "out-of-stock";
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "Menu [foodId=" + foodId + 
+               ", foodName=" + foodName + 
+               ", foodPrice=" + foodPrice + 
+               ", foodCategory=" + foodCategory + 
+               ", stockQuantity=" + stockQuantity + "]";
     }
 }
