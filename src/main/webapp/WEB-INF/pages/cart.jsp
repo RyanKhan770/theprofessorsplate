@@ -43,14 +43,22 @@
                         <c:forEach items="${cartItems}" var="item">
                             <div class="cart-item">
                                 <div class="item-image">
-                                    <img src="${pageContext.request.contextPath}/resources/productsImage/${item.foodImage}" alt="${item.foodName}">
+                                    <img src="${pageContext.request.contextPath}/${item.foodImage}" alt="${item.foodName}">
                                 </div>
                                 <div class="item-details">
                                     <h3>${item.foodName}</h3>
                                     <p class="item-description">${item.foodDescription}</p>
                                 </div>
                                 <div class="item-price">
-                                    Rs. ${item.foodPrice}
+                                    <c:choose>
+                                        <c:when test="${item.discountedPrice lt item.foodPrice}">
+                                            <span class="original-price">Rs. ${item.foodPrice}</span>
+                                            <span class="discounted-price">Rs. ${item.discountedPrice}</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span>Rs. ${item.foodPrice}</span>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                                 <div class="item-actions">
                                     <form action="${pageContext.request.contextPath}/cart" method="post">
@@ -67,7 +75,7 @@
                         <h3>Order Summary</h3>
                         <div class="summary-item">
                             <span>Subtotal</span>
-                            <span>Rs. <span id="subtotal">0.00</span></span>
+                            <span>Rs. <span id="subtotal">${cart.totalPrice}</span></span>
                         </div>
                         <div class="summary-item">
                             <span>Delivery Fee</span>
@@ -75,46 +83,25 @@
                         </div>
                         <div class="summary-item total">
                             <span>Total</span>
-                            <span>Rs. <span id="total">0.00</span></span>
+                            <span>Rs. <span id="total">${cart.totalPrice + 100.00}</span></span>
                         </div>
-                        <a href="${pageContext.request.contextPath}/checkout" class="btn checkout-btn">Proceed to Checkout</a>
-                        <a href="${pageContext.request.contextPath}/menu" class="btn continue-shopping">Continue Shopping</a>
+                        <a href="${pageContext.request.contextPath}/checkout" class="checkout-btn">
+                            Proceed to Checkout
+                        </a>
                     </div>
                 </div>
             </c:otherwise>
         </c:choose>
     </main>
-    
+
     <jsp:include page="footer.jsp" />
     
     <script>
+        // Calculate total based on subtotal and delivery fee
         document.addEventListener('DOMContentLoaded', function() {
-            // Calculate totals
-            const items = document.querySelectorAll('.cart-item');
-            let subtotal = 0;
-            
-            items.forEach(item => {
-                const priceText = item.querySelector('.item-price').textContent;
-                const price = parseFloat(priceText.replace('Rs. ', ''));
-                subtotal += price;
-            });
-            
-            const deliveryFee = 100.00;
-            const total = subtotal + deliveryFee;
-            
-            document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-            document.getElementById('total').textContent = total.toFixed(2);
-            
-            // Hide alert messages after 5 seconds
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    alert.style.opacity = '0';
-                    setTimeout(() => {
-                        alert.style.display = 'none';
-                    }, 500);
-                }, 5000);
-            });
+            const subtotal = parseFloat(document.getElementById('subtotal').textContent) || 0;
+            const deliveryFee = parseFloat(document.getElementById('delivery-fee').textContent) || 0;
+            document.getElementById('total').textContent = (subtotal + deliveryFee).toFixed(2);
         });
     </script>
 </body>
