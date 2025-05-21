@@ -11,7 +11,16 @@
 </head>
 <body>
     <jsp:include page="header.jsp" />
-    
+    <!-- Add this at the beginning of your menu.jsp -->
+<script>
+function debugCartInfo() {
+    console.log("Session user ID: ${sessionScope.userId}");
+    console.log("Session user name: ${sessionScope.userName}");
+    console.log("Is user logged in? ${sessionScope.userId != null}");
+}
+// Call this when the page loads
+window.onload = debugCartInfo;
+</script>
     <main class="menu-container">
         <section class="menu-hero">
             <h1>Our Menu</h1>

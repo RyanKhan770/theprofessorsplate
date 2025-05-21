@@ -32,25 +32,26 @@ public class LoginService {
         }
 
         // Query only by username, we'll verify password after decryption
-        String query = "SELECT user_name, user_password, user_role FROM user WHERE user_name = ?";
+        String query = "SELECT user_id, user_name, user_password, user_role FROM user WHERE user_name = ?";
         
         try (PreparedStatement stmt = dbConn.prepareStatement(query)) {
             stmt.setString(1, user.getUserName());
             logger.info("Executing login query for user: " + user.getUserName());
             
             try (ResultSet result = stmt.executeQuery()) {
-                if (result.next()) {
-                    // Get encrypted password from database
-                    String encryptedPassword = result.getString("user_password");
-                    String username = result.getString("user_name");
-                    
-                    // Decrypt and validate password
-                    if (validatePassword(user.getUserPassword(), encryptedPassword, username)) {
-                        // Password is valid, set user details
-                        user.setUserRole(result.getString("user_role"));
-                        logger.info("Password validated successfully for user: " + username);
-                        return user;
-                    } else {
+            	if (result.next()) {
+            	    // Get encrypted password from database
+            	    String encryptedPassword = result.getString("user_password");
+            	    String username = result.getString("user_name");
+            	    
+            	    // Decrypt and validate password
+            	    if (validatePassword(user.getUserPassword(), encryptedPassword, username)) {
+            	        // Set ALL user details including ID
+            	        user.setUserId(result.getInt("user_id"));  // Add this line
+            	        user.setUserRole(result.getString("user_role"));
+            	        logger.info("Password validated successfully for user: " + username);
+            	        return user;
+            	    } else {
                         logger.warning("Invalid password for user: " + username);
                         return null;
                     }
