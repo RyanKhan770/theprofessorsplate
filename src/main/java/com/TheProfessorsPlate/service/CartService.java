@@ -34,7 +34,7 @@ public class CartService {
         if (isConnectionError) return null;
         
         String query = "INSERT INTO cart (count, total_price, order_id, delivery_id, payment_id) " +
-                      "VALUES (0, 0.00, 0, 0, 0)";
+                      "VALUES (0, 0.00, NULL, NULL, NULL)";
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             int affectedRows = pstmt.executeUpdate();
@@ -49,9 +49,10 @@ public class CartService {
                     cart.setCartId(cartId);
                     cart.setCount(0);
                     cart.setTotalPrice(BigDecimal.ZERO);
-                    cart.setOrderId(0);
+                    cart.setOrderId(0);  // For object representation only
                     cart.setDeliveryId(0);
                     cart.setPaymentId(0);
+                    
                     return cart;
                 } else {
                     throw new SQLException("Creating cart failed, no ID obtained.");
@@ -206,7 +207,7 @@ public class CartService {
         
         String query = "SELECT DISTINCT c.cart_id FROM cart c " +
                       "JOIN cart_details cd ON c.cart_id = cd.cart_id " +
-                      "WHERE cd.user_id = ? AND c.order_id = 0"; // order_id = 0 means cart not yet ordered
+                      "WHERE cd.user_id = ? AND (c.order_id IS NULL OR c.order_id = 0)"; 
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
             pstmt.setInt(1, userId);

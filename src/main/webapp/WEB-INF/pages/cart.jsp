@@ -43,8 +43,8 @@
                         <c:forEach items="${cartItems}" var="item">
                             <div class="cart-item">
                                 <div class="item-image">
-                                    <img src="${pageContext.request.contextPath}/${item.foodImage}" alt="${item.foodName}">
-                                </div>
+    								<img src="${pageContext.request.contextPath}/${item.foodImage}" alt="${item.foodName}">
+								</div>
                                 <div class="item-details">
                                     <h3>${item.foodName}</h3>
                                     <p class="item-description">${item.foodDescription}</p>
