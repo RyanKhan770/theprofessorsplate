@@ -1,48 +1,42 @@
 package com.TheProfessorsPlate.service;
 
-import com.TheProfessorsPlate.config.DbConfig;
-import com.TheProfessorsPlate.model.Cart;
-import com.TheProfessorsPlate.model.CartDetail;
-import com.TheProfessorsPlate.model.Menu;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.TheProfessorsPlate.config.DbConfig;
+import com.TheProfessorsPlate.model.Cart;
+import com.TheProfessorsPlate.model.CartItem;
+
 public class CartService {
     private static final Logger logger = Logger.getLogger(CartService.class.getName());
     private Connection dbConn;
+    private boolean isConnectionError;
     
     public CartService() {
         try {
             this.dbConn = DbConfig.getDbConnection();
+            isConnectionError = false;
         } catch (SQLException | ClassNotFoundException ex) {
             logger.severe("Database connection error: " + ex.getMessage());
+            isConnectionError = true;
         }
     }
 
     // Create a new cart
-    public Cart createCart(Cart cart) {
-        if (dbConn == null) {
-            logger.severe("Database connection is not available.");
-            return null;
-        }
+    public Cart createCart(int userId) {
+        if (isConnectionError) return null;
         
         String query = "INSERT INTO cart (count, total_price, order_id, delivery_id, payment_id) " +
-                      "VALUES (?, ?, ?, ?, ?)";
+                      "VALUES (0, 0.00, 0, 0, 0)";
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setInt(1, cart.getCount());
-            pstmt.setDouble(2, cart.getTotalPrice());
-            pstmt.setInt(3, cart.getOrderId());
-            pstmt.setInt(4, cart.getDeliveryId());
-            pstmt.setInt(5, cart.getPaymentId());
-            
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
                 throw new SQLException("Creating cart failed, no rows affected.");
@@ -50,13 +44,19 @@ public class CartService {
             
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    cart.setCartId(generatedKeys.getInt(1));
+                    int cartId = generatedKeys.getInt(1);
+                    Cart cart = new Cart();
+                    cart.setCartId(cartId);
+                    cart.setCount(0);
+                    cart.setTotalPrice(BigDecimal.ZERO);
+                    cart.setOrderId(0);
+                    cart.setDeliveryId(0);
+                    cart.setPaymentId(0);
+                    return cart;
                 } else {
                     throw new SQLException("Creating cart failed, no ID obtained.");
                 }
             }
-            
-            return cart;
         } catch (SQLException e) {
             logger.severe("Error creating cart: " + e.getMessage());
             return null;
@@ -65,27 +65,75 @@ public class CartService {
     
     // Add item to cart
     public boolean addToCart(int userId, int foodId, int cartId) {
-        if (dbConn == null) {
-            logger.severe("Database connection is not available.");
-            return false;
-        }
+        if (isConnectionError) return false;
         
-        String query = "INSERT INTO cart_details (user_id, food_id, cart_id) VALUES (?, ?, ?)";
+        // First check if the item is already in the cart
+        String checkQuery = "SELECT * FROM cart_details WHERE user_id = ? AND food_id = ? AND cart_id = ?";
         
-        try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
+        try (PreparedStatement pstmt = dbConn.prepareStatement(checkQuery)) {
             pstmt.setInt(1, userId);
             pstmt.setInt(2, foodId);
             pstmt.setInt(3, cartId);
             
-            return pstmt.executeUpdate() > 0;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // Item already exists in cart, update quantity
+                    return true;
+                } else {
+                    // Item doesn't exist, insert new entry
+                    String insertQuery = "INSERT INTO cart_details (user_id, food_id, cart_id) VALUES (?, ?, ?)";
+                    
+                    try (PreparedStatement insertStmt = dbConn.prepareStatement(insertQuery)) {
+                        insertStmt.setInt(1, userId);
+                        insertStmt.setInt(2, foodId);
+                        insertStmt.setInt(3, cartId);
+                        
+                        int result = insertStmt.executeUpdate();
+                        
+                        // Update the cart count and total price
+                        if (result > 0) {
+                            updateCartTotals(cartId);
+                        }
+                        
+                        return result > 0;
+                    }
+                }
+            }
         } catch (SQLException e) {
             logger.severe("Error adding item to cart: " + e.getMessage());
             return false;
         }
     }
     
+    // Remove item from cart
+    public boolean removeFromCart(int userId, int foodId, int cartId) {
+        if (isConnectionError) return false;
+        
+        String query = "DELETE FROM cart_details WHERE user_id = ? AND food_id = ? AND cart_id = ?";
+        
+        try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, foodId);
+            pstmt.setInt(3, cartId);
+            
+            int result = pstmt.executeUpdate();
+            
+            // Update the cart count and total price
+            if (result > 0) {
+                updateCartTotals(cartId);
+            }
+            
+            return result > 0;
+        } catch (SQLException e) {
+            logger.severe("Error removing item from cart: " + e.getMessage());
+            return false;
+        }
+    }
+    
     // Get cart by ID
     public Cart getCartById(int cartId) {
+        if (isConnectionError) return null;
+        
         String query = "SELECT * FROM cart WHERE cart_id = ?";
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
@@ -93,14 +141,14 @@ public class CartService {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return new Cart(
-                        rs.getInt("cart_id"),
-                        rs.getInt("count"),
-                        rs.getDouble("total_price"),
-                        rs.getInt("order_id"),
-                        rs.getInt("delivery_id"),
-                        rs.getInt("payment_id")
-                    );
+                    Cart cart = new Cart();
+                    cart.setCartId(rs.getInt("cart_id"));
+                    cart.setCount(rs.getInt("count"));
+                    cart.setTotalPrice(rs.getBigDecimal("total_price"));
+                    cart.setOrderId(rs.getInt("order_id"));
+                    cart.setDeliveryId(rs.getInt("delivery_id"));
+                    cart.setPaymentId(rs.getInt("payment_id"));
+                    return cart;
                 }
             }
         } catch (SQLException e) {
@@ -110,11 +158,18 @@ public class CartService {
         return null;
     }
     
-    // Get items in a cart
-    public List<Menu> getCartItems(int cartId) {
-        List<Menu> items = new ArrayList<>();
-        String query = "SELECT m.* FROM menu m " +
-                       "JOIN cart_details cd ON m.food_id = cd.food_id " +
+    // Get cart items
+    public List<CartItem> getCartItems(int cartId) {
+        if (isConnectionError) return new ArrayList<>();
+        
+        List<CartItem> items = new ArrayList<>();
+        String query = "SELECT cd.*, m.food_name, m.food_description, m.food_price, m.food_image, " +
+                       "CASE WHEN d.discount_percentage > 0 THEN m.food_price * (1 - d.discount_percentage/100) " +
+                       "     WHEN d.discount_amount > 0 THEN m.food_price - d.discount_amount " +
+                       "     ELSE m.food_price END AS discounted_price " +
+                       "FROM cart_details cd " +
+                       "JOIN menu m ON cd.food_id = m.food_id " +
+                       "LEFT JOIN discount d ON m.discount_id = d.discount_id " +
                        "WHERE cd.cart_id = ?";
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
@@ -122,15 +177,19 @@ public class CartService {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Menu item = new Menu(
-                        rs.getInt("food_id"),
-                        rs.getString("food_name"),
-                        rs.getString("food_description"),
-                        rs.getDouble("food_price"),
-                        rs.getString("food_category"),
-                        rs.getString("food_image"),
-                        rs.getInt("discount_id")
-                    );
+                    CartItem item = new CartItem();
+                    item.setUserId(rs.getInt("user_id"));
+                    item.setFoodId(rs.getInt("food_id"));
+                    item.setCartId(rs.getInt("cart_id"));
+                    item.setQuantity(1); // Default to 1 since your schema doesn't have quantity
+                    
+                    // Set additional product details
+                    item.setFoodName(rs.getString("food_name"));
+                    item.setFoodDescription(rs.getString("food_description"));
+                    item.setFoodPrice(rs.getBigDecimal("food_price"));
+                    item.setFoodImage(rs.getString("food_image"));
+                    item.setDiscountedPrice(rs.getBigDecimal("discounted_price"));
+                    
                     items.add(item);
                 }
             }
@@ -141,87 +200,106 @@ public class CartService {
         return items;
     }
     
-    // Update cart
-    public boolean updateCart(Cart cart) {
-        String query = "UPDATE cart SET count = ?, total_price = ?, order_id = ?, " +
-                      "delivery_id = ?, payment_id = ? WHERE cart_id = ?";
+    // Get active cart ID for user
+    public Integer getActiveCartId(int userId) {
+        if (isConnectionError) return null;
         
-        try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
-            pstmt.setInt(1, cart.getCount());
-            pstmt.setDouble(2, cart.getTotalPrice());
-            pstmt.setInt(3, cart.getOrderId());
-            pstmt.setInt(4, cart.getDeliveryId());
-            pstmt.setInt(5, cart.getPaymentId());
-            pstmt.setInt(6, cart.getCartId());
-            
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            logger.severe("Error updating cart: " + e.getMessage());
-            return false;
-        }
-    }
-    
-    // Remove item from cart
-    public boolean removeFromCart(int userId, int foodId, int cartId) {
-        String query = "DELETE FROM cart_details WHERE user_id = ? AND food_id = ? AND cart_id = ?";
+        String query = "SELECT DISTINCT c.cart_id FROM cart c " +
+                      "JOIN cart_details cd ON c.cart_id = cd.cart_id " +
+                      "WHERE cd.user_id = ? AND c.order_id = 0"; // order_id = 0 means cart not yet ordered
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
-            pstmt.setInt(2, foodId);
-            pstmt.setInt(3, cartId);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("cart_id");
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("Error getting active cart for user: " + e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    // Update cart with order, delivery, and payment IDs
+    public boolean updateCartWithOrderDetails(int cartId, int orderId, int deliveryId, int paymentId) {
+        if (isConnectionError) return false;
+        
+        String query = "UPDATE cart SET order_id = ?, delivery_id = ?, payment_id = ? WHERE cart_id = ?";
+        
+        try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
+            pstmt.setInt(1, orderId);
+            pstmt.setInt(2, deliveryId);
+            pstmt.setInt(3, paymentId);
+            pstmt.setInt(4, cartId);
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.severe("Error removing item from cart: " + e.getMessage());
+            logger.severe("Error updating cart with order details: " + e.getMessage());
             return false;
         }
     }
     
-    // Delete cart
-    public boolean deleteCart(int cartId) {
-        // First delete cart details (foreign key constraint)
-        String deleteDetailsQuery = "DELETE FROM cart_details WHERE cart_id = ?";
-        String deleteCartQuery = "DELETE FROM cart WHERE cart_id = ?";
+    // Update cart totals (count and total price)
+    private void updateCartTotals(int cartId) throws SQLException {
+        String countQuery = "SELECT COUNT(*) AS item_count FROM cart_details WHERE cart_id = ?";
+        String priceQuery = "SELECT SUM(CASE WHEN d.discount_percentage > 0 THEN m.food_price * (1 - d.discount_percentage/100) " +
+                           "     WHEN d.discount_amount > 0 THEN m.food_price - d.discount_amount " +
+                           "     ELSE m.food_price END) AS total_price " +
+                           "FROM cart_details cd " +
+                           "JOIN menu m ON cd.food_id = m.food_id " +
+                           "LEFT JOIN discount d ON m.discount_id = d.discount_id " +
+                           "WHERE cd.cart_id = ?";
+                           
+        int count = 0;
+        BigDecimal totalPrice = BigDecimal.ZERO;
         
-        try {
-            dbConn.setAutoCommit(false);
+        // Get count
+        try (PreparedStatement pstmt = dbConn.prepareStatement(countQuery)) {
+            pstmt.setInt(1, cartId);
             
-            try (PreparedStatement detailsStmt = dbConn.prepareStatement(deleteDetailsQuery)) {
-                detailsStmt.setInt(1, cartId);
-                detailsStmt.executeUpdate();
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt("item_count");
+                }
             }
+        }
+        
+        // Get total price
+        try (PreparedStatement pstmt = dbConn.prepareStatement(priceQuery)) {
+            pstmt.setInt(1, cartId);
             
-            try (PreparedStatement cartStmt = dbConn.prepareStatement(deleteCartQuery)) {
-                cartStmt.setInt(1, cartId);
-                int result = cartStmt.executeUpdate();
-                
-                dbConn.commit();
-                return result > 0;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    totalPrice = rs.getBigDecimal("total_price");
+                    if (totalPrice == null) {
+                        totalPrice = BigDecimal.ZERO;
+                    }
+                }
             }
-        } catch (SQLException e) {
-            try {
-                dbConn.rollback();
-            } catch (SQLException ex) {
-                logger.severe("Error rolling back transaction: " + ex.getMessage());
-            }
-            logger.severe("Error deleting cart: " + e.getMessage());
-            return false;
-        } finally {
-            try {
-                dbConn.setAutoCommit(true);
-            } catch (SQLException e) {
-                logger.severe("Error resetting auto-commit: " + e.getMessage());
-            }
+        }
+        
+        // Update cart
+        String updateQuery = "UPDATE cart SET count = ?, total_price = ? WHERE cart_id = ?";
+        
+        try (PreparedStatement pstmt = dbConn.prepareStatement(updateQuery)) {
+            pstmt.setInt(1, count);
+            pstmt.setBigDecimal(2, totalPrice);
+            pstmt.setInt(3, cartId);
+            
+            pstmt.executeUpdate();
         }
     }
     
-    // Close connection
+    // Clean up resources
     public void close() {
         if (dbConn != null) {
             try {
-                dbConn.close();
-            } catch (SQLException e) {
-                logger.severe("Error closing connection: " + e.getMessage());
+                DbConfig.closeConnection(dbConn);
+            } catch (Exception e) {
+                logger.severe("Error closing database connection: " + e.getMessage());
             }
         }
     }

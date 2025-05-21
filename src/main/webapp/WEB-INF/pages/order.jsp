@@ -1,4 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,18 +13,31 @@
 <body>
     <jsp:include page="header.jsp" />
     
+    <!-- Display messages if any -->
+    <c:if test="${not empty success}">
+        <div class="alert success-alert">
+            <p>${success}</p>
+        </div>
+    </c:if>
+    
+    <c:if test="${not empty error}">
+        <div class="alert error-alert">
+            <p>${error}</p>
+        </div>
+    </c:if>
+    
     <main class="order-container">
         <div class="order-header">
             <div class="order-info">
-                <h1>Order #${order.id}</h1>
+                <h1>Order #${order.orderId}</h1>
                 <div class="order-meta">
                     <span class="order-date">
                         <i class="fas fa-calendar"></i>
-                        ${order.date}
+                        <fmt:formatDate value="${order.orderDate}" pattern="MMMM dd, yyyy HH:mm" />
                     </span>
-                    <span class="order-status ${order.status.toLowerCase()}">
+                    <span class="order-status ${order.orderStatus.toLowerCase()}">
                         <i class="fas fa-clock"></i>
-                        ${order.status}
+                        ${order.orderStatus}
                     </span>
                 </div>
             </div>
@@ -43,42 +58,50 @@
                 <section class="tracking-section">
                     <h2>Order Tracking</h2>
                     <div class="tracking-timeline">
-                        <div class="timeline-item complete">
+                        <div class="timeline-item ${order.orderStatus == 'pending' || order.orderStatus == 'confirmed' || order.orderStatus == 'preparing' || order.orderStatus == 'delivered' ? 'complete' : ''}">
                             <div class="timeline-icon">
                                 <i class="fas fa-check"></i>
                             </div>
                             <div class="timeline-content">
                                 <h3>Order Confirmed</h3>
                                 <p>Your order has been received</p>
-                                <span class="timeline-time">10:21 AM</span>
+                                <span class="timeline-time"><fmt:formatDate value="${order.orderDate}" pattern="HH:mm" /></span>
                             </div>
                         </div>
-                        <div class="timeline-item active">
+                        <div class="timeline-item ${order.orderStatus == 'preparing' || order.orderStatus == 'delivered' ? 'complete' : order.orderStatus == 'confirmed' ? 'active' : ''}">
                             <div class="timeline-icon">
                                 <i class="fas fa-utensils"></i>
                             </div>
                             <div class="timeline-content">
                                 <h3>Preparing</h3>
                                 <p>Your food is being prepared</p>
-                                <span class="timeline-time">10:25 AM</span>
+                                <c:if test="${order.orderStatus == 'preparing' || order.orderStatus == 'delivered'}">
+                                    <span class="timeline-time"><fmt:formatDate value="${order.orderDate}" pattern="HH:mm" /></span>
+                                </c:if>
                             </div>
                         </div>
-                        <div class="timeline-item">
+                        <div class="timeline-item ${order.orderStatus == 'in-transit' || order.orderStatus == 'delivered' ? 'complete' : order.orderStatus == 'preparing' ? 'active' : ''}">
                             <div class="timeline-icon">
                                 <i class="fas fa-motorcycle"></i>
                             </div>
                             <div class="timeline-content">
                                 <h3>On the Way</h3>
                                 <p>Order picked up for delivery</p>
+                                <c:if test="${order.orderStatus == 'in-transit' || order.orderStatus == 'delivered'}">
+                                    <span class="timeline-time"><fmt:formatDate value="${order.delivery.deliveryTime}" pattern="HH:mm" /></span>
+                                </c:if>
                             </div>
                         </div>
-                        <div class="timeline-item">
+                        <div class="timeline-item ${order.orderStatus == 'delivered' ? 'complete' : order.orderStatus == 'in-transit' ? 'active' : ''}">
                             <div class="timeline-icon">
                                 <i class="fas fa-home"></i>
                             </div>
                             <div class="timeline-content">
                                 <h3>Delivered</h3>
                                 <p>Enjoy your meal!</p>
+                                <c:if test="${order.orderStatus == 'delivered'}">
+                                    <span class="timeline-time"><fmt:formatDate value="${order.delivery.deliveryTime}" pattern="HH:mm" /></span>
+                                </c:if>
                             </div>
                         </div>
                     </div>
@@ -90,102 +113,62 @@
                         <c:forEach items="${order.items}" var="item">
                             <div class="order-item">
                                 <div class="item-image">
-                                    <img src="${item.imageUrl}" alt="${item.name}">
+                                    <img src="${pageContext.request.contextPath}/${item.foodImage}" alt="${item.foodName}">
                                 </div>
                                 <div class="item-details">
-                                    <h3>${item.name}</h3>
-                                    <p class="item-options">${item.options}</p>
-                                    <div class="item-quantity">
-                                        Quantity: ${item.quantity}
-                                    </div>
+                                    <h4>${item.foodName}</h4>
+                                    <p class="item-description">${item.foodDescription}</p>
                                 </div>
-                                <div class="item-price">
-                                    $${item.price}
-                                </div>
+                                <div class="item-price">Rs. ${item.discountedPrice}</div>
                             </div>
                         </c:forEach>
                     </div>
                 </section>
             </div>
-
-            <div class="order-summary">
+            
+            <aside class="order-sidebar">
                 <section class="delivery-info">
-                    <h2>Delivery Information</h2>
-                    <div class="info-card">
-                        <div class="info-row">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div>
-                                <h3>Delivery Address</h3>
-                                <p>${order.address.street}</p>
-                                <p>${order.address.city}, ${order.address.state} ${order.address.zip}</p>
-                            </div>
-                        </div>
-                        <div class="info-row">
-                            <i class="fas fa-user"></i>
-                            <div>
-                                <h3>Contact</h3>
-                                <p>${order.customer.name}</p>
-                                <p>${order.customer.phone}</p>
-                            </div>
-                        </div>
+                    <h3>Delivery Information</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> ${order.delivery.deliveryLocation}</p>
+                    <p><i class="fas fa-phone"></i> ${order.delivery.deliveryPhone}</p>
+                    <p><i class="fas fa-user"></i> Delivery Person: 
+                        <c:choose>
+                            <c:when test="${order.delivery.deliveryPerson eq 'To be assigned'}">
+                                <span class="awaiting">To be assigned</span>
+                            </c:when>
+                            <c:otherwise>
+                                ${order.delivery.deliveryPerson}
+                            </c:otherwise>
+                        </c:choose>
+                    </p>
+                    <p><i class="fas fa-info-circle"></i> Status: <span class="status-badge ${order.delivery.deliveryStatus}">${order.delivery.deliveryStatus}</span></p>
+                </section>
+                
+                <section class="payment-info">
+                    <h3>Payment Information</h3>
+                    <p><i class="fas fa-money-bill-wave"></i> Method: ${order.payment.paymentMethod}</p>
+                    <p><i class="fas fa-info-circle"></i> Status: <span class="status-badge ${order.payment.paymentStatus}">${order.payment.paymentStatus}</span></p>
+                    <p><i class="fas fa-receipt"></i> Amount: Rs. ${order.payment.paymentAmount}</p>
+                </section>
+                
+                <section class="order-summary">
+                    <h3>Order Summary</h3>
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span>Rs. ${order.payment.paymentAmount - 100.00}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Delivery Fee</span>
+                        <span>Rs. 100.00</span>
+                    </div>
+                    <div class="summary-item total">
+                        <span>Total</span>
+                        <span>Rs. ${order.payment.paymentAmount}</span>
                     </div>
                 </section>
-
-                <section class="payment-summary">
-                    <h2>Payment Summary</h2>
-                    <div class="summary-card">
-                        <div class="summary-row">
-                            <span>Subtotal</span>
-                            <span>$${order.subtotal}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Delivery Fee</span>
-                            <span>$${order.deliveryFee}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Tax</span>
-                            <span>$${order.tax}</span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>Total</span>
-                            <span>$${order.total}</span>
-                        </div>
-                        <div class="payment-method">
-                            <i class="fas fa-credit-card"></i>
-                            <span>Paid with ${order.paymentMethod}</span>
-                        </div>
-                    </div>
-                </section>
-            </div>
+            </aside>
         </div>
     </main>
-
-    <div class="support-modal" style="display: none;">
-        <div class="modal-content">
-            <button class="close-modal">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2>Need Help?</h2>
-            <div class="support-options">
-                <button class="support-option">
-                    <i class="fas fa-question-circle"></i>
-                    <span>Order Issue</span>
-                </button>
-                <button class="support-option">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span>Wrong Order</span>
-                </button>
-                <button class="support-option">
-                    <i class="fas fa-clock"></i>
-                    <span>Delivery Delay</span>
-                </button>
-                <button class="support-option">
-                    <i class="fas fa-phone"></i>
-                    <span>Contact Support</span>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <jsp:include page="footer.jsp" />
 </body>

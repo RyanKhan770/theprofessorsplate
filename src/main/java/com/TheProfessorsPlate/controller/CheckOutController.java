@@ -1,15 +1,15 @@
 package com.TheProfessorsPlate.controller;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.logging.Logger;
+
 import com.TheProfessorsPlate.model.Cart;
-import com.TheProfessorsPlate.model.Delivery;
-import com.TheProfessorsPlate.model.Menu;
+import com.TheProfessorsPlate.model.CartItem;
 import com.TheProfessorsPlate.model.Order;
-import com.TheProfessorsPlate.model.Payment;
 import com.TheProfessorsPlate.service.CartService;
-import com.TheProfessorsPlate.service.DeliveryService;
 import com.TheProfessorsPlate.service.OrderService;
-import com.TheProfessorsPlate.service.PaymentService;
-import com.TheProfessorsPlate.util.RedirectionUtil;
 import com.TheProfessorsPlate.util.SessionUtil;
 
 import jakarta.servlet.ServletException;
@@ -17,38 +17,30 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
 
-@WebServlet(asyncSupported = true, urlPatterns = {"/checkOut"})
+@WebServlet(asyncSupported = true, urlPatterns = {"/checkout"})
 public class CheckOutController extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(CheckOutController.class.getName());
     private CartService cartService;
     private OrderService orderService;
-    private PaymentService paymentService;
-    private DeliveryService deliveryService;
-    private RedirectionUtil redirectionUtil;
     
     @Override
     public void init() {
         cartService = new CartService();
         orderService = new OrderService();
-        paymentService = new PaymentService();
-        deliveryService = new DeliveryService();
-        redirectionUtil = new RedirectionUtil();
     }
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Verify user is logged in
+        // Check if user is logged in
+        String userName = (String) SessionUtil.getAttribute(request, "userName");
         Integer userId = (Integer) SessionUtil.getAttribute(request, "userId");
         
-        if (userId == null) {
-            // User not logged in, redirect to login page
-            redirectionUtil.setMsgAndRedirect(request, response, "error", "Please log in to checkout", 
-                                              "/login");
+        if (userName == null || userId == null) {
+            request.setAttribute("error", "You must be logged in to checkout");
+            request.getRequestDispatcher("/login").forward(request, response);
             return;
         }
         
@@ -56,41 +48,63 @@ public class CheckOutController extends HttpServlet {
         Integer cartId = (Integer) SessionUtil.getAttribute(request, "cartId");
         
         if (cartId == null) {
-            // No active cart, redirect to menu
-            redirectionUtil.setMsgAndRedirect(request, response, "error", "No items in cart", 
-                                              "/menu");
-            return;
+            // Try to find an active cart for the user
+            cartId = cartService.getActiveCartId(userId);
+            
+            if (cartId != null) {
+                // Found an active cart, store it in session
+                SessionUtil.setAttribute(request, "cartId", cartId);
+            } else {
+                // No active cart, redirect to cart page with message
+                request.setAttribute("error", "Your cart is empty");
+                request.getRequestDispatcher("/cart").forward(request, response);
+                return;
+            }
         }
         
-        // Get cart details
-        Cart cart = cartService.getCartById(cartId);
-        request.setAttribute("cart", cart);
-        
-        // Get cart items
-        List<Menu> cartItems = cartService.getCartItems(cartId);
-        request.setAttribute("cartItems", cartItems);
-        
-        // Calculate total price
-        double total = 0;
-        for (Menu item : cartItems) {
-            total += item.getFoodPrice();
+        // Get cart details and items
+        try {
+            Cart cart = cartService.getCartById(cartId);
+            List<CartItem> cartItems = cartService.getCartItems(cartId);
+            
+            if (cart == null || cartItems == null || cartItems.isEmpty()) {
+                request.setAttribute("error", "Your cart is empty");
+                request.getRequestDispatcher("/cart").forward(request, response);
+                return;
+            }
+            
+            request.setAttribute("cart", cart);
+            request.setAttribute("cartItems", cartItems);
+            
+            // Calculate subtotal, delivery fee, and total
+            BigDecimal subtotal = cart.getTotalPrice();
+            BigDecimal deliveryFee = new BigDecimal("100.00"); // Fixed delivery fee
+            BigDecimal total = subtotal.add(deliveryFee);
+            
+            request.setAttribute("subtotal", subtotal);
+            request.setAttribute("deliveryFee", deliveryFee);
+            request.setAttribute("total", total);
+            
+            // Forward to checkout page
+            request.getRequestDispatcher("/WEB-INF/pages/checkOut.jsp").forward(request, response);
+            
+        } catch (Exception e) {
+            logger.severe("Error retrieving cart for checkout: " + e.getMessage());
+            request.setAttribute("error", "An error occurred while preparing your checkout");
+            request.getRequestDispatcher("/cart").forward(request, response);
         }
-        request.setAttribute("totalPrice", total);
-        
-        // Forward to checkout.jsp
-        redirectionUtil.redirectToPage(request, response, "/WEB-INF/pages/checkout.jsp");
     }
     
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Verify user is logged in
+        // Check if user is logged in
+        String userName = (String) SessionUtil.getAttribute(request, "userName");
         Integer userId = (Integer) SessionUtil.getAttribute(request, "userId");
         
-        if (userId == null) {
-            // User not logged in, redirect to login page
-            redirectionUtil.setMsgAndRedirect(request, response, "error", "Please log in to checkout", 
-                                              "/login");
+        if (userName == null || userId == null) {
+            request.setAttribute("error", "You must be logged in to place an order");
+            request.getRequestDispatcher("/login").forward(request, response);
             return;
         }
         
@@ -98,92 +112,71 @@ public class CheckOutController extends HttpServlet {
         Integer cartId = (Integer) SessionUtil.getAttribute(request, "cartId");
         
         if (cartId == null) {
-            // No active cart, redirect to menu
-            redirectionUtil.setMsgAndRedirect(request, response, "error", "No items in cart", 
-                                              "/menu");
+            request.setAttribute("error", "Your cart is empty");
+            request.getRequestDispatcher("/cart").forward(request, response);
             return;
         }
         
-        // Process checkout
+        // Process checkout form
         try {
-            // Create payment
-            String paymentMethod = request.getParameter("paymentMethod");
-            double paymentAmount = Double.parseDouble(request.getParameter("totalAmount"));
-            
-            Payment payment = new Payment(
-                new Date(),
-                paymentMethod,
-                "pending", // Initial status
-                paymentAmount
-            );
-            Payment createdPayment = paymentService.createPayment(payment);
-            
-            if (createdPayment == null) {
-                throw new Exception("Failed to create payment");
-            }
-            
-            // Create delivery
-            String deliveryAddress = request.getParameter("deliveryAddress");
+            // Get form data
+            String deliveryLocation = request.getParameter("deliveryLocation");
             String deliveryPhone = request.getParameter("deliveryPhone");
+            String paymentMethod = request.getParameter("paymentMethod");
             
-            Delivery delivery = new Delivery(
-                "", // Will be assigned later
-                "pending", // Initial status
-                deliveryPhone,
-                new Date(), // Current date, will be updated
-                deliveryAddress,
-                createdPayment.getPaymentId()
-            );
-            Delivery createdDelivery = deliveryService.createDelivery(delivery);
-            
-            if (createdDelivery == null) {
-                throw new Exception("Failed to create delivery");
+            // Validate form data
+            if (deliveryLocation == null || deliveryLocation.trim().isEmpty() ||
+                deliveryPhone == null || deliveryPhone.trim().isEmpty() ||
+                paymentMethod == null || paymentMethod.trim().isEmpty()) {
+                
+                request.setAttribute("error", "Please fill in all required fields");
+                doGet(request, response);
+                return;
             }
+            
+            // Get cart total
+            Cart cart = cartService.getCartById(cartId);
+            if (cart == null) {
+                request.setAttribute("error", "Your cart is empty");
+                request.getRequestDispatcher("/cart").forward(request, response);
+                return;
+            }
+            
+            BigDecimal subtotal = cart.getTotalPrice();
+            BigDecimal deliveryFee = new BigDecimal("100.00"); // Fixed delivery fee
+            BigDecimal total = subtotal.add(deliveryFee);
             
             // Create order
-            List<Menu> cartItems = cartService.getCartItems(cartId);
-            Order order = new Order(
-                new Date(),
-                "pending", // Initial status
-                cartItems.size(),
-                createdDelivery.getDeliveryId(),
-                createdPayment.getPaymentId()
-            );
-            Order createdOrder = orderService.createOrder(order);
+            Order order = orderService.createOrder(userId, cartId, deliveryLocation, 
+                                                  deliveryPhone, paymentMethod, total);
             
-            if (createdOrder == null) {
+            if (order != null) {
+                // Clear the cart ID from session
+                SessionUtil.removeAttribute(request, "cartId");
+                
+                // Store the order ID in session for the confirmation page
+                SessionUtil.setAttribute(request, "lastOrderId", order.getOrderId());
+                
+                // Redirect to order confirmation page
+                response.sendRedirect(request.getContextPath() + "/order?id=" + order.getOrderId());
+            } else {
                 throw new Exception("Failed to create order");
             }
             
-            // Update cart with order, delivery, and payment IDs
-            Cart cart = cartService.getCartById(cartId);
-            cart.setOrderId(createdOrder.getOrderId());
-            cart.setDeliveryId(createdDelivery.getDeliveryId());
-            cart.setPaymentId(createdPayment.getPaymentId());
-            cart.setTotalPrice(paymentAmount);
-            
-            if (!cartService.updateCart(cart)) {
-                throw new Exception("Failed to update cart");
-            }
-            
-            // Process payment (in a real application, this would integrate with a payment gateway)
-            if (paymentService.processPayment(createdPayment)) {
-                // Update order status
-                orderService.updateOrderStatus(createdOrder.getOrderId(), "confirmed");
-                
-                // Clear cart ID from session
-                SessionUtil.removeAttribute(request, "cartId");
-                
-                // Redirect to success page
-                redirectionUtil.setMsgAndRedirect(request, response, "success", "Order placed successfully", 
-                                                 "/order?id=" + createdOrder.getOrderId());
-            } else {
-                throw new Exception("Payment processing failed");
-            }
-            
         } catch (Exception e) {
-            redirectionUtil.setMsgAndRedirect(request, response, "error", "Checkout failed: " + e.getMessage(), 
-                                             "/checkout");
+            logger.severe("Error processing checkout: " + e.getMessage());
+            request.setAttribute("error", "An error occurred while processing your order: " + e.getMessage());
+            doGet(request, response);
+        }
+    }
+    
+    @Override
+    public void destroy() {
+        if (cartService != null) {
+            cartService.close();
+        }
+        if (orderService != null) {
+            orderService.close();
         }
     }
 }

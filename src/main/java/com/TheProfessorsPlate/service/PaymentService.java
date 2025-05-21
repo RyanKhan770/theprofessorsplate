@@ -1,57 +1,66 @@
 package com.TheProfessorsPlate.service;
 
-import com.TheProfessorsPlate.config.DbConfig;
-import com.TheProfessorsPlate.model.Payment;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.math.BigDecimal;
+import java.util.Date;
 import java.util.logging.Logger;
+
+import com.TheProfessorsPlate.config.DbConfig;
+import com.TheProfessorsPlate.model.Payment;
 
 public class PaymentService {
     private static final Logger logger = Logger.getLogger(PaymentService.class.getName());
     private Connection dbConn;
+    private boolean isConnectionError;
     
     public PaymentService() {
         try {
             this.dbConn = DbConfig.getDbConnection();
+            isConnectionError = false;
         } catch (SQLException | ClassNotFoundException ex) {
             logger.severe("Database connection error: " + ex.getMessage());
+            isConnectionError = true;
         }
     }
     
     // Create a new payment
-    public Payment createPayment(Payment payment) {
-        if (dbConn == null) {
-            logger.severe("Database connection is not available.");
-            return null;
-        }
+    public Payment createPayment(String paymentMethod, BigDecimal amount) {
+        if (isConnectionError) return null;
         
         String query = "INSERT INTO payment (payment_date, payment_method, payment_status, payment_amount) " +
-                       "VALUES (?, ?, ?, ?)";
+                      "VALUES (?, ?, ?, ?)";
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setDate(1, new java.sql.Date(payment.getPaymentDate().getTime()));
-            pstmt.setString(2, payment.getPaymentMethod());
-            pstmt.setString(3, payment.getPaymentStatus());
-            pstmt.setDouble(4, payment.getPaymentAmount());
+            Date currentDate = new Date();
+            pstmt.setDate(1, new java.sql.Date(currentDate.getTime()));
+            pstmt.setString(2, paymentMethod);
+            pstmt.setString(3, "pending"); // Initial status
+            pstmt.setBigDecimal(4, amount);
             
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
-                throw new SQLException("Creating payment failed, no rows affected.");
+                logger.warning("Creating payment failed, no rows affected.");
+                return null;
             }
             
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
+                    Payment payment = new Payment();
                     payment.setPaymentId(generatedKeys.getInt(1));
+                    payment.setPaymentDate(currentDate);
+                    payment.setPaymentMethod(paymentMethod);
+                    payment.setPaymentStatus("pending");
+                    payment.setPaymentAmount(amount);
+                    return payment;
                 } else {
-                    throw new SQLException("Creating payment failed, no ID obtained.");
+                    logger.warning("Creating payment failed, no ID obtained.");
+                    return null;
                 }
             }
-            
-            return payment;
         } catch (SQLException e) {
             logger.severe("Error creating payment: " + e.getMessage());
             return null;
@@ -60,6 +69,8 @@ public class PaymentService {
     
     // Get payment by ID
     public Payment getPaymentById(int paymentId) {
+        if (isConnectionError) return null;
+        
         String query = "SELECT * FROM payment WHERE payment_id = ?";
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
@@ -67,13 +78,13 @@ public class PaymentService {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return new Payment(
-                        rs.getInt("payment_id"),
-                        rs.getDate("payment_date"),
-                        rs.getString("payment_method"),
-                        rs.getString("payment_status"),
-                        rs.getDouble("payment_amount")
-                    );
+                    Payment payment = new Payment();
+                    payment.setPaymentId(rs.getInt("payment_id"));
+                    payment.setPaymentDate(rs.getDate("payment_date"));
+                    payment.setPaymentMethod(rs.getString("payment_method"));
+                    payment.setPaymentStatus(rs.getString("payment_status"));
+                    payment.setPaymentAmount(rs.getBigDecimal("payment_amount"));
+                    return payment;
                 }
             }
         } catch (SQLException e) {
@@ -85,6 +96,8 @@ public class PaymentService {
     
     // Update payment status
     public boolean updatePaymentStatus(int paymentId, String status) {
+        if (isConnectionError) return false;
+        
         String query = "UPDATE payment SET payment_status = ? WHERE payment_id = ?";
         
         try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
@@ -98,33 +111,23 @@ public class PaymentService {
         }
     }
     
-    // Process payment (example for integrating with a payment gateway)
-    public boolean processPayment(Payment payment) {
-        // In a real application, this would integrate with a payment gateway
-        // For now, we'll simulate a successful payment
-        payment.setPaymentStatus("completed");
+    // Process payment (simulate payment gateway integration)
+    public boolean processPayment(int paymentId, String method) {
+        if (isConnectionError) return false;
         
-        // Update the payment in the database
-        String query = "UPDATE payment SET payment_status = ? WHERE payment_id = ?";
+        // In a real-world scenario, this would integrate with a payment gateway
+        // For this implementation, we'll simply update the status to "completed"
         
-        try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
-            pstmt.setString(1, payment.getPaymentStatus());
-            pstmt.setInt(2, payment.getPaymentId());
-            
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            logger.severe("Error processing payment: " + e.getMessage());
-            return false;
-        }
+        return updatePaymentStatus(paymentId, "completed");
     }
     
-    // Close connection
+    // Clean up resources
     public void close() {
         if (dbConn != null) {
             try {
-                dbConn.close();
-            } catch (SQLException e) {
-                logger.severe("Error closing connection: " + e.getMessage());
+                DbConfig.closeConnection(dbConn);
+            } catch (Exception e) {
+                logger.severe("Error closing database connection: " + e.getMessage());
             }
         }
     }
