@@ -23,40 +23,97 @@ public class DeliveryService {
     }
     
     // Create a new delivery
+    // Create a new delivery
     public Delivery createDelivery(Delivery delivery) {
         if (dbConn == null) {
             logger.severe("Database connection is not available.");
             return null;
         }
         
-        String query = "INSERT INTO delivery (delivery_person, delivery_status, delivery_phone, " +
-                       "delivery_time, delivery_location, payment_id) VALUES (?, ?, ?, ?, ?, ?)";
-        
-        try (PreparedStatement pstmt = dbConn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, delivery.getDeliveryPerson());
-            pstmt.setString(2, delivery.getDeliveryStatus());
-            pstmt.setString(3, delivery.getDeliveryPhone());
-            pstmt.setDate(4, new java.sql.Date(delivery.getDeliveryTime().getTime()));
-            pstmt.setString(5, delivery.getDeliveryLocation());
-            pstmt.setInt(6, delivery.getPaymentId());
+        // Check which version of the delivery schema we're using
+        if (isNewDeliverySchema()) {
+            // New delivery schema with person, status, phone, etc.
+            String query = "INSERT INTO delivery (delivery_person, delivery_status, delivery_phone, " +
+                          "delivery_time, delivery_location, payment_id) VALUES (?, ?, ?, ?, ?, ?)";
             
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new SQLException("Creating delivery failed, no rows affected.");
-            }
-            
-            try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    delivery.setDeliveryId(generatedKeys.getInt(1));
+            try (PreparedStatement pstmt = dbConn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, delivery.getDeliveryPerson());
+                pstmt.setString(2, delivery.getDeliveryStatus());
+                pstmt.setString(3, delivery.getDeliveryPhone());
+                
+                if (delivery.getDeliveryTime() != null) {
+                    pstmt.setDate(4, new java.sql.Date(delivery.getDeliveryTime().getTime()));
                 } else {
-                    throw new SQLException("Creating delivery failed, no ID obtained.");
+                    pstmt.setDate(4, new java.sql.Date(System.currentTimeMillis()));
                 }
+                
+                pstmt.setString(5, delivery.getDeliveryLocation());
+                pstmt.setInt(6, delivery.getPaymentId());
+                
+                int affectedRows = pstmt.executeUpdate();
+                if (affectedRows == 0) {
+                    throw new SQLException("Creating delivery failed, no rows affected.");
+                }
+                
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        delivery.setDeliveryId(generatedKeys.getInt(1));
+                    } else {
+                        throw new SQLException("Creating delivery failed, no ID obtained.");
+                    }
+                }
+                
+                return delivery;
+            } catch (SQLException e) {
+                logger.severe("Error creating delivery with new schema: " + e.getMessage());
+                return null;
             }
+        } else {
+            // Old delivery schema with address, city, state, etc.
+            String query = "INSERT INTO delivery (address, city, state, zip_code, delivery_method, special_instructions) " +
+                          "VALUES (?, ?, ?, ?, ?, ?)";
             
-            return delivery;
+            try (PreparedStatement pstmt = dbConn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, delivery.getAddress());
+                pstmt.setString(2, delivery.getCity());
+                pstmt.setString(3, delivery.getState());
+                pstmt.setString(4, delivery.getZipCode());
+                pstmt.setString(5, delivery.getDeliveryMethod());
+                pstmt.setString(6, delivery.getSpecialInstructions());
+                
+                int affectedRows = pstmt.executeUpdate();
+                if (affectedRows == 0) {
+                    throw new SQLException("Creating delivery failed, no rows affected.");
+                }
+                
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        delivery.setDeliveryId(generatedKeys.getInt(1));
+                    } else {
+                        throw new SQLException("Creating delivery failed, no ID obtained.");
+                    }
+                }
+                
+                return delivery;
+            } catch (SQLException e) {
+                logger.severe("Error creating delivery with old schema: " + e.getMessage());
+                return null;
+            }
+        }
+    }
+    
+    // Helper method to determine which delivery schema we're using
+    private boolean isNewDeliverySchema() {
+        try {
+            // Check if delivery_person column exists
+            String query = "SELECT delivery_person FROM delivery LIMIT 1";
+            try (PreparedStatement pstmt = dbConn.prepareStatement(query)) {
+                pstmt.executeQuery();
+                return true; // If no exception, column exists
+            }
         } catch (SQLException e) {
-            logger.severe("Error creating delivery: " + e.getMessage());
-            return null;
+            // Column doesn't exist, using old schema
+            return false;
         }
     }
     

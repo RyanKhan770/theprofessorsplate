@@ -4,29 +4,33 @@ import java.math.BigDecimal;
 
 public class CartItem {
     private int cartDetailId;
-    private int userId;
-    private int foodId;
     private int cartId;
+    private int foodId;
     private int quantity;
+    private BigDecimal price;
+    private int userId;
     
-    // Additional fields for convenience (not stored in cart_details table)
+    // Additional fields for convenience
     private String foodName;
     private String foodDescription;
-    private String foodImage;
     private BigDecimal foodPrice;
+    private String foodImage;
     private BigDecimal discountedPrice;
+    private Menu menuItem;
     
     public CartItem() {
     }
     
-    public CartItem(int userId, int foodId, int cartId, int quantity) {
-        this.userId = userId;
-        this.foodId = foodId;
+    public CartItem(int cartDetailId, int cartId, int foodId, int quantity, BigDecimal price, int userId) {
+        this.cartDetailId = cartDetailId;
         this.cartId = cartId;
+        this.foodId = foodId;
         this.quantity = quantity;
+        this.price = price;
+        this.userId = userId;
     }
 
-    // Getters and setters
+    // Original getters and setters
     public int getCartDetailId() {
         return cartDetailId;
     }
@@ -35,12 +39,12 @@ public class CartItem {
         this.cartDetailId = cartDetailId;
     }
 
-    public int getUserId() {
-        return userId;
+    public int getCartId() {
+        return cartId;
     }
 
-    public void setUserId(int userId) {
-        this.userId = userId;
+    public void setCartId(int cartId) {
+        this.cartId = cartId;
     }
 
     public int getFoodId() {
@@ -51,14 +55,6 @@ public class CartItem {
         this.foodId = foodId;
     }
 
-    public int getCartId() {
-        return cartId;
-    }
-
-    public void setCartId(int cartId) {
-        this.cartId = cartId;
-    }
-    
     public int getQuantity() {
         return quantity;
     }
@@ -66,7 +62,24 @@ public class CartItem {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
     
+    // Additional getters and setters
     public String getFoodName() {
         return foodName;
     }
@@ -83,20 +96,20 @@ public class CartItem {
         this.foodDescription = foodDescription;
     }
 
-    public String getFoodImage() {
-        return foodImage;
-    }
-
-    public void setFoodImage(String foodImage) {
-        this.foodImage = foodImage;
-    }
-
     public BigDecimal getFoodPrice() {
         return foodPrice;
     }
 
     public void setFoodPrice(BigDecimal foodPrice) {
         this.foodPrice = foodPrice;
+    }
+
+    public String getFoodImage() {
+        return foodImage;
+    }
+
+    public void setFoodImage(String foodImage) {
+        this.foodImage = foodImage;
     }
 
     public BigDecimal getDiscountedPrice() {
@@ -106,10 +119,26 @@ public class CartItem {
     public void setDiscountedPrice(BigDecimal discountedPrice) {
         this.discountedPrice = discountedPrice;
     }
+    
+    public Menu getMenuItem() {
+        return menuItem;
+    }
+
+    public void setMenuItem(Menu menuItem) {
+        this.menuItem = menuItem;
+    }
+    
+    // Calculate subtotal
+    public BigDecimal getSubtotal() {
+        // Use discountedPrice if available, otherwise use price
+        BigDecimal priceToUse = discountedPrice != null ? discountedPrice : 
+                               (price != null ? price : BigDecimal.ZERO);
+        return priceToUse.multiply(new BigDecimal(quantity));
+    }
 
     @Override
     public String toString() {
-        return "CartItem [cartDetailId=" + cartDetailId + ", userId=" + userId + ", foodId=" + foodId + ", cartId="
-                + cartId + ", quantity=" + quantity + ", foodName=" + foodName + ", foodPrice=" + foodPrice + "]";
+        return "CartItem [cartDetailId=" + cartDetailId + ", cartId=" + cartId + ", foodId=" + foodId + 
+               ", quantity=" + quantity + ", foodName=" + foodName + "]";
     }
 }
