@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-@WebServlet("/checkout")
+@WebServlet(asyncSupported = true, urlPatterns = {"/checkOut"})
 public class CheckOutController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private CartService cartService;

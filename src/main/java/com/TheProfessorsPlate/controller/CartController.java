@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet("/cart")
+@WebServlet(asyncSupported = true, urlPatterns = {"/cart"})
 public class CartController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private CartService cartService;
