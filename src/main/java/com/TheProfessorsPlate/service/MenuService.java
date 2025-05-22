@@ -239,4 +239,16 @@ public class MenuService {
             return false;
         }
     }
+    
+    public void close() {
+        if (dbConn != null) {
+            try {
+                dbConn.close();
+                System.out.println("Database connection closed successfully");
+            } catch (SQLException e) {
+                System.err.println("Error closing database connection: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
 }

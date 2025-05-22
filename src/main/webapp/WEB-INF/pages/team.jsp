@@ -27,7 +27,7 @@
         </div>
         <h2 class="member-name">Bivek Dahal</h2>
         <h3 class="member-task-title">Task:</h3>
-        <p class="member-task">----------</p>
+        <p class="member-task">Database</p>
         <div class="member-contact">
           <p><i class="fas fa-map-marker-alt"></i> Tinkune, Kathmandu</p>
           <p><i class="fas fa-envelope"></i> <a href="mailto:bivek123dahal@gmail.com">bivek123dahal@gmail.com</a></p>
@@ -45,7 +45,7 @@
         </div>
         <h2 class="member-name">Amin Tamang</h2>
         <h3 class="member-task-title">Task:</h3>
-        <p class="member-task">----------</p>
+        <p class="member-task">Documentation</p>
         <div class="member-contact">
           <p><i class="fas fa-map-marker-alt"></i> Chandragiri Hills, Nepal</p>
           <p><i class="fas fa-envelope"></i> <a href="mailto:amin1000369@gmail.com">amin1000369@gmail.com</a></p>
@@ -63,7 +63,7 @@
         </div>
         <h2 class="member-name">Nigel Awale</h2>
         <h3 class="member-task-title">Task:</h3>
-        <p class="member-task">----------</p>
+        <p class="member-task">FrontEnd</p>
         <div class="member-contact">
           <p><i class="fas fa-map-marker-alt"></i> Satdobato, Lalitpur</p>
           <p><i class="fas fa-envelope"></i> <a href="mailto:nigelawale123@gmail.com">nigelawale123@gmail.com</a></p>
@@ -81,7 +81,7 @@
         </div>
         <h2 class="member-name">Ryan Khan</h2>
         <h3 class="member-task-title">Task:</h3>
-        <p class="member-task">----------</p>
+        <p class="member-task">BackEnd</p>
         <div class="member-contact">
           <p><i class="fas fa-map-marker-alt"></i> Patan, Lalitpur</p>
           <p><i class="fas fa-envelope"></i> <a href="mailto:ryankhan770@gmail.com">ryankhan770@gmail.com</a></p>
@@ -99,7 +99,7 @@
         </div>
         <h2 class="member-name">Sanjog Shrestha</h2>
         <h3 class="member-task-title">Task:</h3>
-        <p class="member-task">----------</p>
+        <p class="member-task">FrontEnd</p>
         <div class="member-contact">
           <p><i class="fas fa-map-marker-alt"></i> Budhanilkantha, Nepal</p>
           <p><i class="fas fa-envelope"></i> <a href="mailto:sanjoksth99@gmail.com">sanjoksth99@gmail.com</a></p>

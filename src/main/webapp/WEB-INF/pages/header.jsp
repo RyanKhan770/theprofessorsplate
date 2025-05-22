@@ -29,7 +29,7 @@
                             	</c:if>
                             	<c:if test="${sessionScope.userRole eq 'customer'}">
                             	<a href="${pageContext.request.contextPath}/customerDashboard"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-                            	<a href="${pageContext.request.contextPath}/cart"><i class="fa-solid fa-gauge"></i> cart</a>
+                            	<a href="${pageContext.request.contextPath}/cart"><i class="fa-solid fa-cart-shopping"></i> cart</a>
                             	</c:if>
                                 <a href="${pageContext.request.contextPath}/profile"><i class="fas fa-user"></i> My Profile</a>
                                 <a href="${pageContext.request.contextPath}/order"><i class="fas fa-shopping-bag"></i> Orders</a>
