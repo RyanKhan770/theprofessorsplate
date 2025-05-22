@@ -67,7 +67,7 @@
         <div class="gallery-grid">
             <img src="${pageContext.request.contextPath}/resources/productsImage/cookingImage.jpg" alt="Dining Experience" class="gallery-image large">
             <img src="${pageContext.request.contextPath}/resources/productsImage/indianCurd.jpg" class="gallery-image small">
-            <img src="${pageContext.request.contextPath}/resources/productsImage/chef1.jpg" class="gallery-image tall">
+            <img src="${pageContext.request.contextPath}/resources/productsImage/chilliChiken.jpg" class="gallery-image tall">
             <img src="${pageContext.request.contextPath}/resources/productsImage/newDish.jpg" class="gallery-image wide">
         </div>
         <img src="${pageContext.request.contextPath}/resources/productsImage/midStew.jpg" alt="Restaurant Banner" class="gallery-banner">

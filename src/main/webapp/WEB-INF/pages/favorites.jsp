@@ -23,7 +23,7 @@
             <!-- Sample favorite item 1 -->
             <div class="favorite-item">
                 <div class="favorite-image">
-                    <img src="${pageContext.request.contextPath}/resources/productsImage/pasta.jpg" alt="Pasta Carbonara">
+                    <img src="${pageContext.request.contextPath}/resources/productsImage/Pasta.jpg" alt="Pasta Carbonara">
                 </div>
                 <div class="favorite-details">
                     <h3>Pasta Carbonara</h3>
@@ -45,7 +45,7 @@
             <!-- Sample favorite item 2 -->
             <div class="favorite-item">
                 <div class="favorite-image">
-                    <img src="${pageContext.request.contextPath}/resources/productsImage/pizza.jpg" alt="Margherita Pizza">
+                    <img src="${pageContext.request.contextPath}/resources/productsImage/Piz.jpg" alt="Margherita Pizza">
                 </div>
                 <div class="favorite-details">
                     <h3>Margherita Pizza</h3>
@@ -68,7 +68,7 @@
             <!-- Sample favorite item 3 -->
             <div class="favorite-item">
                 <div class="favorite-image">
-                    <img src="${pageContext.request.contextPath}/resources/productsImage/salad.jpg" alt="Caesar Salad">
+                    <img src="${pageContext.request.contextPath}/resources/productsImage/fruitesCombo.jpg" alt="Caesar Salad">
                 </div>
                 <div class="favorite-details">
                     <h3>Caesar Salad</h3>
@@ -90,7 +90,7 @@
             <!-- Sample favorite item 4 -->
             <div class="favorite-item">
                 <div class="favorite-image">
-                    <img src="${pageContext.request.contextPath}/resources/productsImage/burger.jpg" alt="Classic Burger">
+                    <img src="${pageContext.request.contextPath}/resources/productsImage/Burger.jpg" alt="Classic Burger">
                 </div>
                 <div class="favorite-details">
                     <h3>Classic Burger</h3>

@@ -23,6 +23,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 @WebServlet(asyncSupported = true, urlPatterns = {"/adminProducts"})
@@ -64,6 +65,17 @@ public class AdminProductsController extends HttpServlet {
             redirectionUtil.setMsgAndRedirect(request, response, "error", 
                     "User not found", "/login");
             return;
+        }
+        
+        // Check for session messages and transfer to request attributes
+        HttpSession session = request.getSession();
+        if (session.getAttribute("success") != null) {
+            request.setAttribute("success", session.getAttribute("success"));
+            session.removeAttribute("success");
+        }
+        if (session.getAttribute("error") != null) {
+            request.setAttribute("error", session.getAttribute("error"));
+            session.removeAttribute("error");
         }
         
         // Set current date and time for display
